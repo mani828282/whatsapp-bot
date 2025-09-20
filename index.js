@@ -7,7 +7,7 @@ const axios = require('axios');
 const app = express();
 app.use(express.json());
 
-// PASTE YOUR N8N WEBHOOK URL HERE
+// IMPORTANT: Remember to paste your real n8n webhook URL here
 const N8N_WEBHOOK_URL = 'PASTE_YOUR_N8N_WEBHOOK_URL_HERE';
 
 process.on('unhandledRejection', (reason, promise) => {
