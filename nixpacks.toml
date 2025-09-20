@@ -1,0 +1,21 @@
+# nixpacks.toml
+
+[phases.setup]
+# This tells Railway to install Chromium and all its helper files.
+nixPkgs = [
+    "chromium", 
+    "alsa-lib", 
+    "at-spi2-atk", 
+    "cups", 
+    "gtk3", 
+    "libdrm", 
+    "libxkbcommon", 
+    "libxcomposite", 
+    "libxdamage", 
+    "libxfixes", 
+    "libxrandr", 
+    "mesa", 
+    "nss", 
+    "pango"
+]
+```3.  Save the `nixpacks.toml` file.
