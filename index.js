@@ -7,49 +7,48 @@ const axios = require('axios');
 const app = express();
 app.use(express.json());
 
-// IMPORTANT: We will get this URL from n8n in the next phase.
-// For now, leave it as a placeholder.
+// PASTE YOUR N8N WEBHOOK URL HERE
 const N8N_WEBHOOK_URL = 'PASTE_YOUR_N8N_WEBHOOK_URL_HERE';
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+});
+process.on('uncaughtException', (err, origin) => {
+  console.error('Uncaught Exception:', err, 'Origin:', origin);
+});
 
 const client = new Client({
     authStrategy: new LocalAuth(),
     puppeteer: {
-        headless: true, // This is the default, but it's good to be explicit
+        headless: true,
+        executablePath: '/usr/bin/chromium',
         args: [
-            '--no-sandbox',
-            '--disable-setuid-sandbox',
-            '--disable-dev-shm-usage',
-            '--disable-accelerated-2d-canvas',
-            '--no-first-run',
-            '--no-zygote',
-            '--disable-gpu'
+            '--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage',
+            '--disable-accelerated-2d-canvas', '--no-first-run', '--no-zygote',
+            '--disable-gpu', '--disable-cache', '--media-cache-size=0', '--disk-cache-size=0',
         ],
     }
 });
 
 client.on('qr', qr => qrcode.generate(qr, { small: true }));
-client.on('ready', () => console.log('Client is ready!'));
+client.on('ready', () => console.log('Client is ready! Bot is running.'));
 
-// This part listens for messages and forwards them to n8n
 client.on('message', async (message) => {
-    // Ignore messages from groups
     if (message.from.includes('@g.us')) return;
-    
     try {
         console.log(`Forwarding message from ${message.from}`);
-        // Send the sender's number and the message text to our n8n workflow
-        await axios.post(N8N_WEBHOOK_URL, {
-            sender: message.from,
-            text: message.body
-        });
+        await axios.post(N8N_WEBHOOK_URL, { sender: message.from, text: message.body });
     } catch (error) {
         console.error('Error forwarding message to n8n:', error.message);
     }
 });
 
-client.initialize();
+client.initialize().catch(err => console.error('Initialization failed', err));
 
-// This part creates a mini-API so n8n can tell our bot to send a reply
+app.get('/', (req, res) => {
+    res.status(200).json({ status: 'ok', message: 'Bot is running.' });
+});
+
 app.post('/send-reply', async (req, res) => {
     const { number, message } = req.body;
     if (!number || !message) {
@@ -64,5 +63,4 @@ app.post('/send-reply', async (req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
-
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+app.listen(PORT, () => console.log(`Server is listening on port ${PORT}`));
